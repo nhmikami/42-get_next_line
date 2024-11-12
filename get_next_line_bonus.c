@@ -6,7 +6,7 @@
 /*   By: naharumi <naharumi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 19:11:01 by naharumi          #+#    #+#             */
-/*   Updated: 2024/11/12 19:11:50 by naharumi         ###   ########.fr       */
+/*   Updated: 2024/11/12 19:29:54 by naharumi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,7 +68,7 @@ static char	*read_until_nl(int fd, char **backup)
 		return (NULL);
 	if (*backup)
 	{
-		line = ft_strdup(backup);
+		line = ft_strdup(*backup);
 		free(*backup);
 		*backup = NULL;
 	}
@@ -112,6 +112,7 @@ char	*get_next_line(int fd)
 	line = NULL;	
 	node = find_or_add_node(&backup, fd);
 	line = read_until_nl(fd, &node->content);
+	line = update_backup(&line, &node->content);
 	if (line && ft_strchr(line, '\n'))
 	{
 		free(node->content);
@@ -119,6 +120,7 @@ char	*get_next_line(int fd)
 	}
 	else
 	{
+		free(line);
 		remove_node(&backup, fd);
 		return (NULL);
 	}

@@ -6,7 +6,7 @@
 /*   By: naharumi <naharumi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/11 20:09:18 by naharumi          #+#    #+#             */
-/*   Updated: 2024/11/12 18:38:23 by naharumi         ###   ########.fr       */
+/*   Updated: 2024/11/12 19:31:56 by naharumi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,13 +19,6 @@
 # ifndef BUFFER_SIZE
 #  define BUFFER_SIZE 1
 # endif
-
-typedef struct s_read
-{
-	int				fd;
-	char			*content;
-	struct s_read	*next;
-}					t_read;
 
 char	*get_next_line(int fd);
 char	*ft_strchr(const char *s, int c);
