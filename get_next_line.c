@@ -196,16 +196,6 @@ char	*get_next_line(int fd)
 	if (!buffer)
 		return (NULL);
 	line = read_until_nl(fd, line, buffer, backup);
-
-	if (backup)
-	{
-		line = ft_strdup(backup);
-		if (!line)
-			return (NULL);
-		free(backup);
-		backup = NULL;
-	}
-	line = read_until_nl(fd, line);
 	if (!line)
 		return (NULL);
 	line = update_line_backup(line, &backup);
