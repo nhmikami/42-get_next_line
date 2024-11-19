@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   get_next_line.c                                    :+:      :+:    :+:   */
+/*   get_next_line_bonus.c                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: naharumi <naharumi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/11/11 20:08:44 by naharumi          #+#    #+#             */
-/*   Updated: 2024/11/14 18:59:27 by naharumi         ###   ########.fr       */
+/*   Created: 2024/11/12 19:11:01 by naharumi          #+#    #+#             */
+/*   Updated: 2024/11/12 19:29:54 by naharumi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
+#include "get_next_line_bonus.h"
 
 static char	*cleanup_and_return(char **line, char **backup)
 {
@@ -77,21 +77,21 @@ char	*get_next_line(int fd)
 {
 	char		*line;
 	char		*buffer;
-	static char	*backup;
+	static char	*backup[MAX_FD];
 
-	if (fd < 0 || BUFFER_SIZE <= 0)
+	if (fd < 0 || BUFFER_SIZE <= 0 || fd > MAX_FD)
 		return (NULL);
 	line = NULL;
-	if (backup)
-		line = ft_strdup(backup);
+	if (backup[fd])
+		line = ft_strdup(backup[fd]);
 	buffer = malloc(sizeof(char) * (BUFFER_SIZE + 1));
 	if (!buffer)
-		return (cleanup_and_return(&line, &backup));
+		return (cleanup_and_return(&line, &backup[fd]));
 	line = read_until_nl(fd, line, buffer);
 	if (!line || line[0] == '\0')
-		return (cleanup_and_return(&line, &backup));
-	line = update_line_backup(line, &backup);
+		return (cleanup_and_return(&line, &backup[fd]));
+	line = update_line_backup(line, &backup[fd]);
 	if (!line || line[0] == '\0')
-		return (cleanup_and_return(&line, &backup));
+		return (cleanup_and_return(&line, &backup[fd]));
 	return (line);
 }
