@@ -6,7 +6,7 @@
 /*   By: naharumi <naharumi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 19:11:04 by naharumi          #+#    #+#             */
-/*   Updated: 2024/11/12 19:11:25 by naharumi         ###   ########.fr       */
+/*   Updated: 2024/11/21 15:27:30 by naharumi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 char	*ft_strchr(const char *s, int c)
 {
-	while (*s != '\0')
+	while (*s)
 	{
 		if (*s == (char)c)
 			return ((char *)s);
@@ -22,56 +22,66 @@ char	*ft_strchr(const char *s, int c)
 	}
 	if (*s == (char)c)
 		return ((char *)s);
-	return (0);
+	return (NULL);
 }
 
 char	*ft_strdup(const char *s)
 {
-	int		i;
 	size_t	len;
 	char	*dest;
 
-	i = 0;
+	if (!s)
+		return (NULL);
 	len = ft_strlen(s);
-	dest = (char *)malloc(sizeof(char) * (len + 1));
+	dest = malloc(sizeof(char) * (len + 1));
 	if (!dest)
-		return (0);
-	while (s[i] != '\0')
-	{
-		dest[i] = s[i];
-		i++;
-	}
-	dest[i] = '\0';
+		return (NULL);
+	ft_memmove(dest, s, len);
+	dest[len] = '\0';
 	return (dest);
 }
 
-char	*ft_strjoin(char const *s1, char const *s2)
+char	*ft_strjoin(char *s1, char *s2)
 {
-	int		i;
 	char	*str;
-	size_t	size;
+	size_t	len1;
+	size_t	len2;
 
-	if (s1 == NULL || s2 == NULL)
-		return (0);
-	size = ft_strlen(s1) + ft_strlen(s2) + 1;
-	str = malloc(size);
+	if (!s1)
+		return (ft_strdup(s2));
+	if (!s2)
+		return (ft_strdup(s1));
+	len1 = ft_strlen(s1);
+	len2 = ft_strlen(s2);
+	str = malloc(sizeof(char) * (len1 + len2 + 1));
 	if (!str)
-		return (0);
-	i = 0;
-	while (*s1)
-	{
-		str[i] = *s1;
-		s1++;
-		i++;
-	}
-	while (*s2)
-	{
-		str[i] = *s2;
-		s2++;
-		i++;
-	}
-	str[i] = '\0';
+		return (NULL);
+	ft_memmove(str, s1, len1);
+	ft_memmove(&str[len1], s2, len2);
+	str[len1 + len2] = '\0';
+	free(s1);
 	return (str);
+}
+
+void	*ft_memmove(void *dest, const void *src, size_t n)
+{
+	unsigned char		*d;
+	const unsigned char	*s;
+
+	d = (unsigned char *)dest;
+	s = (const unsigned char *)src;
+	if (!dest && !src)
+		return (NULL);
+	if (s < d)
+	{
+		while (n--)
+			d[n] = s[n];
+		return (dest);
+	}
+	else
+		while (n--)
+			*(d++) = *(s++);
+	return (dest);
 }
 
 size_t	ft_strlen(const char *s)
@@ -79,7 +89,7 @@ size_t	ft_strlen(const char *s)
 	size_t	len;
 
 	len = 0;
-	while (s[len] != '\0')
+	while (s[len])
 		len++;
 	return (len);
 }

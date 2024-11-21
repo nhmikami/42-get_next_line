@@ -6,150 +6,35 @@
 /*   By: naharumi <naharumi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/11 20:08:44 by naharumi          #+#    #+#             */
-/*   Updated: 2024/11/14 18:59:27 by naharumi         ###   ########.fr       */
+/*   Updated: 2024/11/21 19:56:37 by naharumi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-// static char	*read_until_nl(int fd, char *buffer, char *line, char *backup)
-// {
-// 	int	bytes_read;
+static char	*cleanup_and_return(char *line, char *backup)
+{
+	if (line)
+		free(line);
+	if (backup)
+	{
+		free(backup);
+		backup = NULL;
+	}
+	return (NULL);
+}
 
-// 	// Se houver conteúdo residual no backup, começa a linha com ele
-// 	if (backup)
-// 	{
-// 		line = ft_strdup(backup);
-// 		free(backup);
-// 		backup = NULL;
-// 		if (!line)
-// 			return (NULL);
-// 	}
-// 	bytes_read = 1;
-// 	// Lê o arquivo até encontrar '\n' ou até o fim
-// 	while (bytes_read > 0)
-// 	{
-// 		bytes_read = read(fd, buffer, BUFFER_SIZE);
-// 		// Caso a leitura não retorne bytes válidos (fim do arquivo ou erro)
-// 		if (bytes_read <= 0)
-// 		{
-// 			// Se há uma linha já lida, retorna ela
-// 			if (line)
-// 				return (line);
-// 			return (NULL);
-// 		}
-// 		// Garante que o buffer termine com '\0' para garantir uma string válida
-// 		buffer[bytes_read] = '\0';
-// 		// Junta a linha atual com os novos dados do buffer
-// 		line = ft_strjoin(line, buffer);
-// 		// Se encontrar o '\n', quebra o loop
-// 		if (ft_strchr(line, '\n'))
-// 			break ;
-// 	}
-// 	return (line);
-// }
-
-// // Função que retorna a linha antes do '\n' (inclusive)
-// static char	*get_line(char *str)
-// {
-// 	char	*line;
-// 	int		line_len;
-
-// 	// Calcula o comprimento da linha até o primeiro '\n'
-// 	line_len = 0;
-// 	while (str[line_len] && str[line_len] != '\n')
-// 		line_len++;
-// 	if (str[line_len] == '\n')  // Conta também o '\n' se existir
-// 		line_len++;
-// 	// Aloca a memória para a linha
-// 	line = malloc((line_len + 1) * sizeof(char));
-// 	if (line)
-// 	{
-// 		// Copia a linha para a memória alocada
-// 		ft_memmove(line, str, line_len);
-// 		line[line_len] = '\0';  // Garante que a string termina com '\0'
-// 	}
-// 	// Libera o espaço usado pela string original
-// 	free(str);
-// 	return (line);
-// }
-
-// // Função que salva o restante da linha após o '\n'
-// static char	*save_remainder(char *buffer)
-// {
-// 	int		i;
-// 	int		len;
-// 	char	*remainder;
-
-// 	i = 0;
-// 	len = 0;
-// 	remainder = NULL;
-// 	// Encontra o índice do '\n'
-// 	while (buffer[i] && buffer[i] != '\n')
-// 		i++;
-// 	// Se houver um '\n', avança para o próximo caractere
-// 	if (buffer[i] == '\n')
-// 		i++;
-// 	// Calcula o tamanho do restante após o '\n'
-// 	len = ft_strlen(buffer) - i;
-// 	if (buffer[i] != '\0')  // Se houver algum conteúdo restante
-// 	{
-// 		// Aloca memória para o restante da string
-// 		remainder = malloc((len + 1) * sizeof(char));
-// 		if (remainder)
-// 		{
-// 			// Copia o restante da string
-// 			ft_memmove(remainder, &buffer[i], len);
-// 			remainder[len] = '\0';  // Garante que a string termina com '\0'
-// 		}
-// 	}
-// 	return (remainder);
-// }
-
-// // Função principal que retorna a próxima linha de um arquivo
-// char	*get_next_line(int fd)
-// {
-// 	char		*line;
-// 	char		*buffer;
-// 	static char	*backup;  // Armazena o conteúdo restante entre chamadas
-
-// 	// Verifica se a entrada é válida
-// 	if (fd < 0 || BUFFER_SIZE <= 0)
-// 		return (NULL);
-
-// 	line = NULL;
-// 	// Aloca o buffer para leitura dos dados
-// 	buffer = malloc((BUFFER_SIZE + 1) * sizeof(char));
-// 	if (!buffer)
-// 		return (NULL);
-
-// 	// Lê até encontrar um '\n' ou até o fim do arquivo
-// 	line = read_until_nl(fd, buffer, line, backup);
-
-// 	// Se encontrou um '\n', separa a linha e armazena o restante no backup
-// 	if (line && ft_strchr(line, '\n'))
-// 	{
-// 		backup = save_remainder(line);
-// 		line = get_line(line);  // Extrai a linha até o '\n'
-// 	}
-
-// 	// Libera o buffer que foi usado para ler os dados
-// 	free(buffer);
-// 	return (line);
-// }
-
-/////////////////////////////////////////////////////
-
-static char	*read_until_nl(int fd, char *line, char *buffer, char *backup)
+static char	*read_until_nl(int fd, char *line, char *buffer)
 {
 	int		bytes_read;
 
 	bytes_read = 1;
-	while (bytes_read > 0 && !ft_strchr(line, '\n'))
+	while (bytes_read > 0)
 	{
 		bytes_read = read(fd, buffer, BUFFER_SIZE);
 		if (bytes_read < 0)
 		{
+			free(buffer);
 			if (line)
 				return (line);
 			return (NULL);
@@ -157,12 +42,18 @@ static char	*read_until_nl(int fd, char *line, char *buffer, char *backup)
 		buffer[bytes_read] = '\0';
 		line = ft_strjoin(line, buffer);
 		if (!line)
+		{
+			free(buffer);
 			return (NULL);
+		}
+		if (ft_strchr(line, '\n'))
+			break ;
 	}
+	// free(buffer);
 	return (line);
 }
 
-static char	*update_line_backup(char *line, char **backup)
+static char	*update_line_backup(char *line, char *backup)
 {
 	char	*new_line;
 	int		line_len;
@@ -172,13 +63,20 @@ static char	*update_line_backup(char *line, char **backup)
 		line_len++;
 	if (line[line_len] == '\n')
 		line_len++;
-	new_line = malloc(line_len + 1);
+	new_line = malloc(sizeof(char) * (line_len + 1));
 	if (!new_line)
-		return (NULL);
+		return (cleanup_and_return(line, backup));
 	ft_memmove(new_line, line, line_len);
 	new_line[line_len] = '\0';
-	free(*backup);
-	*backup = ft_strdup(&line[line_len]);
+	if (line[line_len] != '\0') // Atualizar apenas se houver algo após o '\n'
+	{
+		backup = ft_strdup(&line[line_len]);
+		if (!backup) // Verificar falha na alocação
+		{
+			free(new_line);
+			return (cleanup_and_return(line, backup));
+		}
+	}
 	free(line);
 	return (new_line);
 }
@@ -192,12 +90,20 @@ char	*get_next_line(int fd)
 	if (fd < 0 || BUFFER_SIZE <= 0)
 		return (NULL);
 	line = NULL;
+	if (backup)
+	{
+		line = ft_strdup(backup);
+		free(backup);
+		backup = NULL;
+	}
 	buffer = malloc(sizeof(char) * (BUFFER_SIZE + 1));
 	if (!buffer)
-		return (NULL);
-	line = read_until_nl(fd, line, buffer, backup);
-	if (!line)
-		return (NULL);
-	line = update_line_backup(line, &backup);
+		return (cleanup_and_return(line, backup));
+	line = read_until_nl(fd, line, buffer);
+	if (!line || line[0] == '\0')
+		return (cleanup_and_return(line, backup));
+	line = update_line_backup(line, backup);
+	if (!line || line[0] == '\0')
+		return (cleanup_and_return(line, backup));
 	return (line);
 }

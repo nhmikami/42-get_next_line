@@ -6,123 +6,97 @@
 /*   By: naharumi <naharumi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 19:11:01 by naharumi          #+#    #+#             */
-/*   Updated: 2024/11/12 19:29:54 by naharumi         ###   ########.fr       */
+/*   Updated: 2024/11/21 15:23:34 by naharumi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
+#include "get_next_line_bonus.h"
 
-static t_read *find_or_add_node(t_read **head, int fd)
+static char	*cleanup_and_return(char **line, char **backup)
 {
-	t_read	*node;
-	t_read	*new_node;
-
-	node = *head;
-	while (node)
-	{
-		if (node->fd == fd)
-			return (node);
-		node = node->next;
-	}
-	new_node = malloc(sizeof(t_read));
-	if (!new_node)
-		return (NULL);
-	new_node->fd = fd;
-	new_node->content = NULL;
-	new_node->next = *head;
-	*head = new_node;
-	return (new_node);
-}
-
-static void	remove_node(t_read **head, int fd)
-{
-	t_read	*temp;
-	t_read	*prev;
-
-	temp = *head;
-	prev = NULL;
-	while (temp && temp->fd != fd)
-	{
-		prev = temp;
-		temp = temp->next;
-	}
-	if (temp)
-	{
-		if (prev)
-			prev->next = temp->next;
-		else
-			*head = temp->next;
-		free(temp->content);
-		free(temp);
-	}
-}
-
-static char	*read_until_nl(int fd, char **backup)
-{
-	char	*line;
-	char	*buffer;
-	int		bytes_read;
-
-	buffer = malloc(sizeof(char) * (BUFFER_SIZE + 1));
-	if (!buffer)
-		return (NULL);
+	if (*line)
+		free(*line);
 	if (*backup)
 	{
-		line = ft_strdup(*backup);
 		free(*backup);
 		*backup = NULL;
 	}
+	return (NULL);
+}
+
+static char	*read_until_nl(int fd, char *line, char *buffer)
+{
+	int		bytes_read;
+
 	bytes_read = 1;
-	while (bytes_read > 0 && !ft_strchr(line, '\n'))
+	while (bytes_read > 0)
 	{
 		bytes_read = read(fd, buffer, BUFFER_SIZE);
+		if (bytes_read < 0)
+		{
+			free(buffer);
+			return (NULL);
+		}
 		buffer[bytes_read] = '\0';
 		line = ft_strjoin(line, buffer);
+		if (!line)
+		{
+			free(buffer);
+			return (NULL);
+		}
+		if (ft_strchr(line, '\n'))
+			break ;
 	}
 	free(buffer);
 	return (line);
 }
 
-static char	*update_backup(char **line, char **backup)
+static char	*update_line_backup(char *line, char **backup)
 {
-	char *newline_pos;
+	char	*new_line;
+	int		line_len;
 
-	newline_pos = ft_strchr(*line, '\n');
-	if (newline_pos)
-	{
-		*newline_pos = '\0';
-		*backup = ft_strdup(newline_pos + 1);
-	}
-	else
-	{
+	line_len = 0;
+	while (line[line_len] && line[line_len] != '\n')
+		line_len++;
+	if (line[line_len] == '\n')
+		line_len++;
+	new_line = malloc(sizeof(char) * (line_len + 1));
+	if (!new_line)
+		return (cleanup_and_return(&line, backup));
+	ft_memmove(new_line, line, line_len);
+	new_line[line_len] = '\0';
+	if (*backup)
 		free(*backup);
-		*backup = NULL;
+	*backup = ft_strdup(&line[line_len]);
+	if (!*backup)
+	{
+		free(new_line);
+		return (cleanup_and_return(&line, backup));
 	}
-	return (*line);
+	free(line);
+	return (new_line);
 }
 
 char	*get_next_line(int fd)
 {
-	static t_read	*backup;
-	t_read			*node;
-	char			*line;
+	char		*line;
+	char		*buffer;
+	static char	*backup;
 
-	if (fd < 0 || BUFFER_SIZE <= 0)
+	if (fd < 0 || BUFFER_SIZE <= 0 || fd > MAX_FD)
 		return (NULL);
-	line = NULL;	
-	node = find_or_add_node(&backup, fd);
-	line = read_until_nl(fd, &node->content);
-	line = update_backup(&line, &node->content);
-	if (line && ft_strchr(line, '\n'))
-	{
-		free(node->content);
-		node->content = ft_strdup(ft_strchr(line, '\n') + 1);	
-	}
-	else
-	{
-		free(line);
-		remove_node(&backup, fd);
-		return (NULL);
-	}
+	line = NULL;
+	if (backup[fd])
+		line = ft_strdup(backup[fd]);
+	buffer = malloc(sizeof(char) * (BUFFER_SIZE + 1));
+	if (!buffer)
+		return (cleanup_and_return(&line, &backup[fd]));
+	line = read_until_nl(fd, line, buffer);
+	if (!line || line[0] == '\0')
+		return (cleanup_and_return(&line, &backup[fd]));
+	line = update_line_backup(line, &backup[fd]);
+	if (!line || line[0] == '\0')
+		return (cleanup_and_return(&line, &backup[fd]));
 	return (line);
 }
