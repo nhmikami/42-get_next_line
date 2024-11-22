@@ -55,7 +55,10 @@ char	*ft_strjoin(char *s1, char *s2)
 	len2 = ft_strlen(s2);
 	str = malloc(sizeof(char) * (len1 + len2 + 1));
 	if (!str)
+	{
+		free(s1);
 		return (NULL);
+	}
 	ft_memmove(str, s1, len1);
 	ft_memmove(&str[len1], s2, len2);
 	str[len1 + len2] = '\0';

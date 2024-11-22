@@ -12,11 +12,14 @@
 
 #include "get_next_line_bonus.h"
 
-static char	*cleanup_and_return(char **line, char **backup)
+static char	*free_and_return(char **line, char **backup)
 {
-	if (*line)
+	if (line && *line)
+	{
 		free(*line);
-	if (*backup)
+		*line = NULL;
+	}
+	if (backup && *backup)
 	{
 		free(*backup);
 		*backup = NULL;
@@ -27,27 +30,26 @@ static char	*cleanup_and_return(char **line, char **backup)
 static char	*read_until_nl(int fd, char *line, char *buffer)
 {
 	int		bytes_read;
+	char	*tmp;
 
 	bytes_read = 1;
 	while (bytes_read > 0)
 	{
 		bytes_read = read(fd, buffer, BUFFER_SIZE);
 		if (bytes_read < 0)
-		{
-			free(buffer);
-			return (NULL);
-		}
+			return (free_and_return(&line, &buffer));
+		else if (bytes_read == 0)
+			break ;
 		buffer[bytes_read] = '\0';
-		line = ft_strjoin(line, buffer);
-		if (!line)
-		{
-			free(buffer);
-			return (NULL);
-		}
+		tmp = ft_strjoin(line, buffer);
+		if (!tmp)
+			return (free_and_return(&line, &buffer));
+		line = tmp;
 		if (ft_strchr(line, '\n'))
 			break ;
 	}
 	free(buffer);
+	buffer = NULL;
 	return (line);
 }
 
@@ -63,16 +65,14 @@ static char	*update_line_backup(char *line, char **backup)
 		line_len++;
 	new_line = malloc(sizeof(char) * (line_len + 1));
 	if (!new_line)
-		return (cleanup_and_return(&line, backup));
+		return (free_and_return(&line, backup));
 	ft_memmove(new_line, line, line_len);
 	new_line[line_len] = '\0';
-	if (*backup)
-		free(*backup);
 	*backup = ft_strdup(&line[line_len]);
 	if (!*backup)
 	{
 		free(new_line);
-		return (cleanup_and_return(&line, backup));
+		return (free_and_return(&line, backup));
 	}
 	free(line);
 	return (new_line);
@@ -82,21 +82,25 @@ char	*get_next_line(int fd)
 {
 	char		*line;
 	char		*buffer;
-	static char	*backup;
+	static char	*backup[MAX_FD];
 
-	if (fd < 0 || BUFFER_SIZE <= 0 || fd > MAX_FD)
+	if (fd < 0 || BUFFER_SIZE <= 0 || fd >= MAX_FD)
 		return (NULL);
 	line = NULL;
 	if (backup[fd])
+	{
 		line = ft_strdup(backup[fd]);
+		free(backup[fd]);
+		backup[fd] = NULL;
+	}
 	buffer = malloc(sizeof(char) * (BUFFER_SIZE + 1));
 	if (!buffer)
-		return (cleanup_and_return(&line, &backup[fd]));
+		return (free_and_return(&line, &backup[fd]));
 	line = read_until_nl(fd, line, buffer);
 	if (!line || line[0] == '\0')
-		return (cleanup_and_return(&line, &backup[fd]));
+		return (free_and_return(&line, &backup[fd]));
 	line = update_line_backup(line, &backup[fd]);
 	if (!line || line[0] == '\0')
-		return (cleanup_and_return(&line, &backup[fd]));
+		return (free_and_return(&line, &backup[fd]));
 	return (line);
 }
