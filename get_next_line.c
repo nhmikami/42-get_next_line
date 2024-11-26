@@ -30,7 +30,6 @@ static char	*free_and_return(char **line, char **backup)
 static char	*read_until_nl(int fd, char *line, char *buffer)
 {
 	int		bytes_read;
-	char	*tmp;
 
 	bytes_read = 1;
 	while (bytes_read > 0)
@@ -41,10 +40,9 @@ static char	*read_until_nl(int fd, char *line, char *buffer)
 		else if (bytes_read == 0)
 			break ;
 		buffer[bytes_read] = '\0';
-		tmp = ft_strjoin(line, buffer);
-		if (!tmp)
+		line = ft_strjoin(line, buffer);
+		if (!line)
 			return (free_and_return(&line, &buffer));
-		line = tmp;
 		if (ft_strchr(line, '\n'))
 			break ;
 	}
